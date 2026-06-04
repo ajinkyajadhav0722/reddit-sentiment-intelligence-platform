@@ -1,1 +1,3 @@
 ingestion/r_wallstreetbets_posts.csv
+.env
+*.env
