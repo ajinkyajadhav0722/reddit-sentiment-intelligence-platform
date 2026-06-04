@@ -1,0 +1,8 @@
+praw
+yfinance
+snowflake-connector-python
+pandas
+python-dotenv
+transformers
+torch
+nltk
