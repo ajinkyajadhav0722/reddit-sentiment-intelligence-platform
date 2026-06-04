@@ -23,44 +23,15 @@ This end-to-end data engineering project ingests 1.1 million posts from r/WallSt
 
 ## 🏗️ System Architecture
 
-​```
-Reddit WSB CSV (1.1M posts)        Yahoo Finance API (20 tickers)
-         │                                      │
-         ▼                                      ▼
-  csv_ingest.py                    stock_price_ingest.py
-  - Regex ticker extraction         - yfinance OHLCV pull
-  - Batch insert (5,000 rows)       - Per-ticker loading
-         │                                      │
-         └──────────────┬───────────────────────┘
-                        ▼
-              SNOWFLAKE — SENTIMENT_DB
-         ┌──────────────────────────────────┐
-         │  RAW schema                      │
-         │  REDDIT_POSTS  │  STOCK_PRICES   │
-         └──────────────────────────────────┘
-                        │
-                        ▼  (dbt Core)
-         ┌──────────────────────────────────┐
-         │  STAGING  →  INTERMEDIATE        │
-         │  stg_reddit_posts                │
-         │  stg_stock_prices                │
-         │  int_ticker_mentions             │
-         │  int_price_movements (LEAD())    │
-         │  int_sentiment_lag               │
-         └──────────────────────────────────┘
-                        │
-                        ▼
-         ┌──────────────────────────────────┐
-         │  MARTS (materialized tables)     │
-         │  mart_lag_analysis               │
-         │  mart_ticker_scorecard           │
-         │  mart_anomaly_detection          │
-         └──────────────────────────────────┘
-                        │
-                        ▼
-           Power BI — DirectQuery to Snowflake
-​```
-
+| Layer | Component |
+|-------|-----------|
+| **Sources** | Reddit WSB CSV (1.1M posts) · Yahoo Finance API (20 tickers) |
+| **Ingestion** | `csv_ingest.py` · `stock_price_ingest.py` (batch 5K rows) |
+| **Raw** | Snowflake `REDDIT_POSTS` · `STOCK_PRICES` |
+| **Staging** | dbt views — `stg_reddit_posts` · `stg_stock_prices` |
+| **Intermediate** | dbt views — `int_ticker_mentions` · `int_price_movements` · `int_sentiment_lag` |
+| **Marts** | dbt tables — `mart_lag_analysis` · `mart_ticker_scorecard` · `mart_anomaly_detection` |
+| **Dashboard** | Power BI DirectQuery → Snowflake Marts |
 ---
 
 ## 💼 Business Insights From the Data
@@ -133,24 +104,19 @@ AVG(mention_count) OVER (
 
 ## 📁 Project Structure
 
-​```
-reddit-sentiment-intelligence-platform/
-├── ingestion/
-│   ├── csv_ingest.py              # 1.1M Reddit posts → Snowflake (batch 5K rows)
-│   └── stock_price_ingest.py      # yfinance OHLCV → Snowflake
-│
-├── sentiment_dbt/
-│   ├── dbt_project.yml
-│   └── models/
-│       ├── staging/               # Clean + deduplicate raw data (views)
-│       ├── intermediate/          # Mentions aggregation, forward returns, lag join (views)
-│       └── marts/                 # Lag analysis, scorecard, anomaly detection (tables)
-│
-├── images/dashboard.png
-├── DASHBOARD.pbix
-├── requirements.txt
-└── README.md
-​```
+**`ingestion/`**
+- `csv_ingest.py` — 1.1M Reddit posts → Snowflake (batch 5K rows)
+- `stock_price_ingest.py` — yfinance OHLCV → Snowflake
+
+**`sentiment_dbt/models/`**
+- `staging/` — clean + deduplicate raw data (views)
+- `intermediate/` — mentions aggregation, forward returns, lag join (views)
+- `marts/` — lag analysis, scorecard, anomaly detection (tables)
+
+**Root**
+- `DASHBOARD.pbix` — Power BI dashboard file
+- `requirements.txt` — Python dependencies
+- `images/dashboard.png` — dashboard screenshot
 
 ---
 
